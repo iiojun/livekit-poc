@@ -13,3 +13,4 @@
  *= require_tree .
  *= require_self
  */
+@import url("https://cdn.jsdelivr.net/npm/@livekit/components-styles@1.2.0/dist/index.css");
