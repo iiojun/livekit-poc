@@ -1,0 +1,165 @@
+<h1>LiveKit PoC</h1>
+
+<div>
+  <label>
+    Name:
+    <input id="identity" value="Jun Iio">
+  </label>
+</div>
+
+<div>
+  <label>
+    Room:
+    <input id="room" value="test-room">
+  </label>
+</div>
+
+<button id="join">Join</button>
+<button id="leave" disabled>Leave</button>
+
+<hr>
+
+<div id="status">Disconnected</div>
+
+<div id="local"></div>
+<div id="remote"></div>
+
+<script type="module">
+  import {
+    Room,
+    RoomEvent
+  } from "https://cdn.jsdelivr.net/npm/livekit-client@2.15.3/+esm";
+
+  let room = null;
+
+  const identityInput = document.getElementById("identity");
+  const roomInput = document.getElementById("room");
+  const joinButton = document.getElementById("join");
+  const leaveButton = document.getElementById("leave");
+  const status = document.getElementById("status");
+  const localContainer = document.getElementById("local");
+  const remoteContainer = document.getElementById("remote");
+
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+  function setStatus(message) {
+    status.textContent = message;
+    console.log(message);
+  }
+
+  function attachTrack(track, container) {
+    const element = track.attach();
+    container.appendChild(element);
+    return element;
+  }
+
+  function removeTrack(track) {
+    track.detach().forEach(element => element.remove());
+  }
+
+  joinButton.addEventListener("click", async () => {
+    try {
+      const identity = identityInput.value.trim();
+      const roomName = roomInput.value.trim();
+
+      if (!identity || !roomName) {
+        alert("Name and Room are required.");
+        return;
+      }
+
+      joinButton.disabled = true;
+      setStatus("Getting token...");
+
+      const response = await fetch("/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-CSRF-Token": csrfToken
+        },
+        body: new URLSearchParams({
+          identity: identity,
+          room: roomName
+        })
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Token request failed: ${response.status} ${text}`);
+      }
+
+      const data = await response.json();
+
+      console.log("Token received");
+
+      setStatus("Connecting to LiveKit...");
+
+      room = new Room();
+
+      room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+        console.log("Track subscribed:", participant.identity, track.kind);
+        attachTrack(track, remoteContainer);
+      });
+
+      room.on(RoomEvent.TrackUnsubscribed, (track) => {
+        removeTrack(track);
+      });
+
+      room.on(RoomEvent.ParticipantConnected, (participant) => {
+        console.log("Participant connected:", participant.identity);
+      });
+
+      room.on(RoomEvent.ParticipantDisconnected, (participant) => {
+        console.log("Participant disconnected:", participant.identity);
+      });
+
+      room.on(RoomEvent.Disconnected, () => {
+        setStatus("Disconnected");
+        joinButton.disabled = false;
+        leaveButton.disabled = true;
+      });
+
+      await room.connect(data.url, data.token);
+
+      setStatus(`Connected to "${roomName}"`);
+
+      await room.localParticipant.enableCameraAndMicrophone();
+
+      room.localParticipant.trackPublications.forEach((publication) => {
+        if (publication.track) {
+          attachTrack(publication.track, localContainer);
+        }
+      });
+
+      // すでにRoomにいる参加者のTrackを表示
+      room.remoteParticipants.forEach((participant) => {
+        participant.trackPublications.forEach((publication) => {
+          if (publication.track) {
+            attachTrack(publication.track, remoteContainer);
+          }
+        });
+      });
+
+      leaveButton.disabled = false;
+
+    } catch (error) {
+      console.error(error);
+      setStatus(`Error: ${error.message}`);
+      joinButton.disabled = false;
+    }
+  });
+
+  leaveButton.addEventListener("click", async () => {
+    if (room) {
+      await room.disconnect();
+      room = null;
+    }
+
+    localContainer.innerHTML = "";
+    remoteContainer.innerHTML = "";
+
+    setStatus("Disconnected");
+
+    joinButton.disabled = false;
+    leaveButton.disabled = true;
+  });
+</script>
