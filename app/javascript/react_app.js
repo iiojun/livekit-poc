@@ -125,13 +125,6 @@ function LiveKitApp() {
     null,
 
     React.createElement(
-      "h2",
-      null,
-      "LiveKit React"
-    ),
-
-
-    React.createElement(
       "div",
       null,
 
