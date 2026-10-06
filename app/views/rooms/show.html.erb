@@ -1,3 +1,10 @@
 <h1>LiveKit PoC</h1>
-
-<div id="react-root"></div>
+<div data-controller="livekit">
+  <%= form_with url: token_path, method: :post,
+        data: { livekit_target: "form", action: "submit->livekit#join" } do %>
+    <%= hidden_field_tag :identity, "User" %>
+    <%= hidden_field_tag :room, "test-room" %>
+    <%= submit_tag "Join" %>
+  <% end %>
+  <div id="livekit-root"></div>
+</div>
