@@ -13,7 +13,7 @@ class LivekitTrackRecorder
 
   def start(room_name:, track_sid:)
     output = LiveKit::Proto::DirectFileOutput.new(
-      filepath: "{room_name}/{track_id}",
+      filepath: "dialogbook/{room_name}/{track_id}.ogg",
       s3: LiveKit::Proto::S3Upload.new(
         access_key: ENV.fetch("R2_ACCESS_KEY_ID"),
         secret: ENV.fetch("R2_SECRET_ACCESS_KEY"),
