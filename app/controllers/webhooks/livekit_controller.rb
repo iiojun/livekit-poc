@@ -51,8 +51,9 @@ module Webhooks
 
       claims
     rescue StandardError => e
-      Rails.logger.warn(
-        "[LiveKit Webhook] verification failed: #{e.class}"
+      Rails.logger.error(
+        "[LiveKit Webhook] #{e.class}: #{e.message}\n" \
+        "#{e.backtrace&.first(10)&.join("\n")}"
       )
       nil
     end
