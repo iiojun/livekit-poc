@@ -5,7 +5,7 @@ module Webhooks
     skip_before_action :verify_authenticity_token
 
     def create
-      LivekitWebhookHandler.new.call(
+      RecordingWebhookHandler.new.call(
         body: request.raw_post,
         auth_token: request.headers["Authorization"].to_s
           .delete_prefix("Bearer ")
