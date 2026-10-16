@@ -67,4 +67,4 @@ end
 
 gem "dotenv-rails", groups: [:development, :test]
 gem "livekit-server-sdk"
-gem "json", "~> 2.21.2"
+gem "json", "~> 3.0.2"
