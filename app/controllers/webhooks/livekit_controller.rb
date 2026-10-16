@@ -25,9 +25,13 @@ module Webhooks
         "[LiveKit Webhook] event=#{event["event"]} id=#{event["id"]}"
       )
 
-      Rails.logger.info(
-        "[LiveKit Webhook] payload=#{event.except("id").inspect}"
-      )
+      if event["event"] == "track_published"
+        Rails.logger.info(
+          "[LiveKit Webhook] room=#{event.dig("room", "name")} " \
+          "identity=#{event.dig("participant", "identity")} " \
+          "track=#{event["track"].inspect}"
+        )
+      end
 
       head :ok
     rescue JSON::ParserError
