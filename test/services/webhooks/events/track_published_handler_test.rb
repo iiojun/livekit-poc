@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require "test_helper"
 
 class Webhooks::Events::TrackPublishedHandlerTest < ActiveSupport::TestCase
@@ -32,7 +30,7 @@ class Webhooks::Events::TrackPublishedHandlerTest < ActiveSupport::TestCase
       egress
     end
 
-    LivekitTrackRecorder.stub(:new, recorder) do
+    with_recorder_stub(recorder) do
       Webhooks::Events::TrackPublishedHandler.new.call(@event)
     end
 
@@ -48,10 +46,12 @@ class Webhooks::Events::TrackPublishedHandlerTest < ActiveSupport::TestCase
   test "non microphone track does not start egress" do
     @event["track"]["source"] = "CAMERA"
 
-    LivekitTrackRecorder.stub(
-      :new,
-      -> { raise "Egress must not start" }
-    ) do
+    recorder = Object.new
+    recorder.define_singleton_method(:start) do |**_args|
+      raise "Egress must not start"
+    end
+
+    with_recorder_stub(recorder) do
       Webhooks::Events::TrackPublishedHandler.new.call(@event)
     end
 
@@ -64,7 +64,7 @@ class Webhooks::Events::TrackPublishedHandlerTest < ActiveSupport::TestCase
       raise "Egress API error"
     end
 
-    LivekitTrackRecorder.stub(:new, recorder) do
+    with_recorder_stub(recorder) do
       assert_raises(RuntimeError) do
         Webhooks::Events::TrackPublishedHandler.new.call(@event)
       end
@@ -76,5 +76,16 @@ class Webhooks::Events::TrackPublishedHandlerTest < ActiveSupport::TestCase
 
     assert_equal "failed", recording.status
     assert_equal "Egress API error", recording.error_message
+  end
+
+  private
+
+  def with_recorder_stub(recorder)
+    original_new = LivekitTrackRecorder.method(:new)
+
+    LivekitTrackRecorder.define_singleton_method(:new) { recorder }
+    yield
+  ensure
+    LivekitTrackRecorder.define_singleton_method(:new, original_new)
   end
 end
