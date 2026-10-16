@@ -25,6 +25,10 @@ module Webhooks
         "[LiveKit Webhook] event=#{event["event"]} id=#{event["id"]}"
       )
 
+      Rails.logger.info(
+        "[LiveKit Webhook] payload=#{event.except("id").inspect}"
+      )
+
       head :ok
     rescue JSON::ParserError
       head :bad_request
