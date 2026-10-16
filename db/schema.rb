@@ -10,8 +10,69 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 0) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_16_074402) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
+  create_table "active_storage_attachments", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "record_type", null: false
+    t.bigint "record_id", null: false
+    t.bigint "blob_id", null: false
+    t.datetime "created_at", null: false
+    t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
+    t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
+  end
+
+  create_table "active_storage_blobs", force: :cascade do |t|
+    t.string "key", null: false
+    t.string "filename", null: false
+    t.string "content_type"
+    t.text "metadata"
+    t.string "service_name", null: false
+    t.bigint "byte_size", null: false
+    t.string "checksum"
+    t.datetime "created_at", null: false
+    t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "active_storage_variant_records", force: :cascade do |t|
+    t.bigint "blob_id", null: false
+    t.string "variation_digest", null: false
+    t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "meeting_recordings", force: :cascade do |t|
+    t.string "room_name", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "started_at"
+    t.datetime "ended_at"
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["room_name", "created_at"], name: "index_meeting_recordings_on_room_name_and_created_at"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'recording'::character varying, 'processing'::character varying, 'completed'::character varying, 'failed'::character varying]::text[])", name: "meeting_recordings_status_check"
+  end
+
+  create_table "participant_recordings", force: :cascade do |t|
+    t.bigint "meeting_recording_id", null: false
+    t.string "participant_identity", null: false
+    t.string "track_sid"
+    t.string "egress_id"
+    t.string "status", default: "pending", null: false
+    t.datetime "track_published_at"
+    t.datetime "started_at"
+    t.datetime "ended_at"
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["egress_id"], name: "index_participant_recordings_on_egress_id", unique: true, where: "(egress_id IS NOT NULL)"
+    t.index ["meeting_recording_id", "status"], name: "index_participant_recordings_on_meeting_and_status"
+    t.index ["meeting_recording_id"], name: "index_participant_recordings_on_meeting_recording_id"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'recording'::character varying, 'uploaded'::character varying, 'processing'::character varying, 'completed'::character varying, 'failed'::character varying]::text[])", name: "participant_recordings_status_check"
+  end
+
+  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "participant_recordings", "meeting_recordings"
 end
