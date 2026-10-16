@@ -1,10 +1,28 @@
 <h1>LiveKit PoC</h1>
+
 <div data-controller="livekit">
   <%= form_with url: token_path, method: :post,
-        data: { livekit_target: "form", action: "submit->livekit#join" } do %>
-    <%= hidden_field_tag :identity, "User" %>
-    <%= hidden_field_tag :room, "test-room" %>
-    <%= submit_tag "Join" %>
+        data: {
+          livekit_target: "form",
+          action: "submit->livekit#join"
+        } do %>
+
+    <div class="mb-3">
+      <%= label_tag :identity, "Participant name" %>
+      <%= text_field_tag :identity, "User-1",
+            class: "form-control",
+            required: true %>
+    </div>
+
+    <div class="mb-3">
+      <%= label_tag :room, "Room name" %>
+      <%= text_field_tag :room, "test-room",
+            class: "form-control",
+            required: true %>
+    </div>
+
+    <%= submit_tag "Join", class: "btn btn-primary" %>
   <% end %>
+
   <div id="livekit-root"></div>
 </div>
