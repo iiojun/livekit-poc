@@ -11,9 +11,7 @@ module Webhooks
         egress_id = info["egressId"]
         return if egress_id.blank?
 
-        recording = ParticipantRecording.find_by(
-          egress_id: egress_id
-        )
+        recording = ParticipantRecording.find_by(egress_id: egress_id)
         return unless recording
 
         status = info["status"].to_s
@@ -34,7 +32,10 @@ module Webhooks
             "[LiveKit Egress] Unexpected status=#{status} " \
             "egress_id=#{egress_id}"
           )
+          return
         end
+
+        MeetingRecordingStatusUpdater.call(recording.meeting_recording)
       end
     end
   end

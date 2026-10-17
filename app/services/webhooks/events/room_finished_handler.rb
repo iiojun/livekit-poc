@@ -17,6 +17,7 @@ module Webhooks
           status: "processing",
           ended_at: Time.current
         )
+        MeetingRecordingStatusUpdater.call(recording)
       end
     end
   end
