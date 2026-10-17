@@ -71,5 +71,22 @@ class Webhooks::Events::EgressEndedHandlerTest < ActiveSupport::TestCase
 
     assert_equal "recording", @recording.reload.status
   end
+
+  test "last uploaded recording completes the meeting" do
+    @meeting.update!(status: "processing")
+
+    event = {
+      "event" => "egress_ended",
+      "egressInfo" => {
+        "egressId" => "EG_test123",
+        "status" => "EGRESS_COMPLETE"
+      }
+    }
+
+    Webhooks::Events::EgressEndedHandler.new.call(event)
+
+    assert_equal "uploaded", @recording.reload.status
+    assert_equal "completed", @meeting.reload.status
+  end
 end
 
